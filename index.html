@@ -4,171 +4,261 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Iskandar Isabekov — Terminal Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code&family=JetBrains+Mono&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 
 <!-- Tailwind CDN (utility classes) -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
   :root{
-    --bg:#282a36;
-    --panel:#1e1e1e;
-    --muted:#b0b0b0;
-    --accent:#bd93f9;  /* purple for Ubuntu vibe */
-    --error:#ff5555;    /* red */
-    --cursor:#50fa7b;   /* green cursor */
+    --bg: #1e1e2e;
+    --panel: #2a2a3a;
+    --text: #cdd6f4;
+    --muted: #6c7086;
+    --accent: #89b4fa;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --red: #f38ba8;
+    --purple: #cba6f7;
+    --orange: #fab387;
+    --cursor: #89b4fa;
+    --selection: rgba(137, 180, 250, 0.3);
   }
 
   html,body{
     height:100%;
     margin:0;
     background: var(--bg);
-    color:#f8f8f2;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Fira Code", "Roboto Mono", monospace;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
+    color: var(--text);
+    font-family: 'Ubuntu Mono', 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    overflow: hidden;
   }
 
-  /* Terminal container */
+  /* Terminal container - full screen like real terminal */
   .terminal {
-    max-width:1100px;
-    margin:40px auto;
-    border-radius:4px;
-    overflow:hidden;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    background: var(--panel);
-    border: 1px solid #44475a;
+    width: 100vw;
+    height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Top bar */
-  .term-bar {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:12px 16px;
-    background: #44475a;
-    border-bottom:1px solid #6272a4;
+  /* Ubuntu-style title bar */
+  .title-bar {
+    background: linear-gradient(180deg, #3c3c3c, #2a2a2a);
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-bottom: 1px solid #1a1a1a;
+    position: relative;
   }
-  .btn {
-    width:12px; height:12px; border-radius:50%;
-    box-shadow:0 1px 0 rgba(0,0,0,0.6) inset;
+  
+  .window-controls {
+    display: flex;
+    gap: 8px;
   }
-  .btn.red{ background: #ff5555; }
-  .btn.yellow{ background: #f1fa8c; }
-  .btn.green{ background: #50fa7b; }
+  
+  .control-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  
+  .control-btn:hover { opacity: 0.8; }
+  .control-btn.close { background: #ff5f57; }
+  .control-btn.minimize { background: #febc2e; }
+  .control-btn.maximize { background: #28ca42; }
+  
+  .title-text {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #bbb;
+    font-weight: 500;
+  }
 
-  /* Screen area */
+  /* Terminal screen */
   .screen {
-    padding:20px;
-    min-height:66vh;
-    max-height:78vh;
-    overflow:auto;
-    line-height:1.6;
-    font-size:15px;
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: var(--bg);
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
   }
 
+  /* Prompt styling */
   .prompt {
-    display:flex;
-    gap:8px;
-    align-items:flex-start;
-    margin-bottom:6px;
+    display: flex;
+    gap: 0;
+    margin: 8px 0 4px 0;
+    white-space: nowrap;
   }
-  .prompt .p1 { color:var(--accent); font-weight:600; }
-  .prompt .p2 { color:var(--muted); }
+  
+  .user { color: var(--green); font-weight: bold; }
+  .at { color: var(--text); }
+  .host { color: var(--green); font-weight: bold; }
+  .path { color: var(--accent); font-weight: bold; }
+  .dollar { color: var(--text); }
 
   .input-line {
-    display:flex;
-    gap:10px;
-    align-items:center;
-    width:100%;
+    display: flex;
+    align-items: center;
+    min-height: 20px;
   }
+  
   .cmd-input {
-    background:transparent;
+    background: transparent;
     border: none;
     outline: none;
-    color: #f8f8f2;
-    width:100%;
-    font-family:inherit;
-    font-size:15px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: inherit;
+    flex: 1;
+    margin-left: 4px;
   }
 
-  /* Typed output styles (simplified) */
-  .out { white-space:pre-wrap; margin:6px 0; }
-  .c-accent { color:var(--accent); }
-  .c-muted { color:var(--muted); }
-  .c-error { color:var(--error); font-weight:700; }
+  /* Output text */
+  .out { 
+    margin: 2px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 
-  /* command chips */
-  .chip{ display:inline-block; padding:4px 8px; border-radius:6px; margin:4px 6px 4px 0; font-size:13px; }
-  .chip-cmd{ background:rgba(189,147,249,0.08); color:var(--accent); border:1px solid rgba(189,147,249,0.12); }
+  /* Ubuntu terminal colors */
+  .text-default { color: var(--text); }
+  .text-muted { color: var(--muted); }
+  .text-green { color: var(--green); }
+  .text-blue { color: var(--accent); }
+  .text-yellow { color: var(--yellow); }
+  .text-red { color: var(--red); }
+  .text-purple { color: var(--purple); }
+  .text-orange { color: var(--orange); }
+  .text-bold { font-weight: bold; }
 
-  /* typing cursor & animation - changed to underline like real terminal */
+  /* Cursor */
   .cursor {
-    width:10px; height:2px; display:inline-block; margin-left:2px; background:var(--cursor); border-radius:1px;
-    animation: blink 1s steps(2,start) infinite;
-    position: relative; top: -4px;
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--cursor);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
   }
-  @keyframes blink { 0%,50%{ opacity:1 } 51%,100% { opacity:0 } }
-
-  /* small helpers */
-  .small { font-size:13px; color:var(--muted); }
-  .kbd { background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.02); font-size:13px; color:#f8f8f2; }
-
-  /* responsive */
-  @media (max-width:640px){
-    .screen { padding:18px; font-size:14px; }
-    .terminal { margin:18px; }
+  
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
   }
 
-  /* scroll bar aesthetic */
-  .screen::-webkit-scrollbar { width:10px; height:10px; }
-  .screen::-webkit-scrollbar-thumb { background:#6272a4; border-radius:8px; }
+  /* Links */
+  a { color: var(--accent); text-decoration: underline; }
+  a:hover { color: var(--yellow); }
 
-  /* Links styling */
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  /* Selection */
+  ::selection { background: var(--selection); }
+
+  /* Scrollbar */
+  .screen::-webkit-scrollbar { width: 12px; }
+  .screen::-webkit-scrollbar-track { background: var(--bg); }
+  .screen::-webkit-scrollbar-thumb { 
+    background: var(--muted); 
+    border-radius: 6px;
+    border: 2px solid var(--bg);
+  }
+  .screen::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* Command suggestions */
+  .cmd-suggestion {
+    background: rgba(137, 180, 250, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin: 0 4px;
+    border: 1px solid rgba(137, 180, 250, 0.2);
+  }
+
+  /* Matrix effect for fun */
+  .matrix-char {
+    color: var(--green);
+    opacity: 0.7;
+    animation: matrix-fall 2s linear infinite;
+  }
+  
+  @keyframes matrix-fall {
+    0% { opacity: 1; transform: translateY(-10px); }
+    100% { opacity: 0; transform: translateY(10px); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .screen { padding: 12px; font-size: 13px; }
+    .title-text { font-size: 12px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="terminal">
-  <div class="term-bar">
-    <div class="btn red" title="Close"></div>
-    <div class="btn yellow" title="Minimize"></div>
-    <div class="btn green" title="Maximize"></div>
-    <div style="flex:1"></div>
-    <div class="small">IskandarIsabekov@portfolio:~</div>
+  <!-- Ubuntu-style title bar -->
+  <div class="title-bar">
+    <div class="window-controls">
+      <div class="control-btn close" onclick="playSound('click')"></div>
+      <div class="control-btn minimize" onclick="playSound('click')"></div>
+      <div class="control-btn maximize" onclick="playSound('click')"></div>
+    </div>
+    <div class="title-text">iskandar@ubuntu: ~/portfolio</div>
   </div>
 
-  <div id="screen" class="screen" tabindex="0" aria-label="Interactive terminal">
-    <!-- All output lines will be injected here -->
+  <div id="screen" class="screen" tabindex="0">
+    <!-- Terminal output will be injected here -->
   </div>
-
-  <div class="p-4 bg-black/40 text-right small c-muted">Tip: Type <span class="kbd">help</span> to see commands • Navigate history with <span class="kbd">↑</span>/<span class="kbd">↓</span></div>
 </div>
 
-<!-- Hidden input to capture keystrokes -->
+<!-- Hidden input for capturing keystrokes -->
 <input id="hiddenInput" class="cmd-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="position:fixed; bottom:-9999px;">
 
 <script>
 /**
- * Terminal Portfolio - Fixed Version
- * Issues fixed:
- * - Async command handling
- * - File system navigation
- * - Tab completion improvements
- * - Game session management
- * - Input handling race conditions
+ * Ubuntu-Style Terminal Portfolio
+ * Enhanced with sound effects, neofetch, system monitoring, and more authentic terminal feel
  */
 
+/* ===========================
+   Profile Data
+   =========================== */
+
 const PROFILE = {
-  name: "Isabekov Iskandar",
+  name: "Iskandar Isabekov",
+  username: "iskandar",
+  hostname: "ubuntu",
   title: "Backend Engineer (Laravel & Payment Systems)",
   location: "Tashkent, Uzbekistan",
   phone: "+998 95 020 09 26",
-  email: "iskandarisabrkov@gmail.com",
+  email: "iskandarisabekov@gmail.com",
   github: "https://github.com/isabekoviskandar",
   linkedin: "https://www.linkedin.com/in/iskandar-isabekov-60745229b",
+  shell: "/bin/bash",
+  uptime: "2h 34m",
   experiences: [
+    {
+      role: "Backend Developer",
+      company: "ParkMe Payment Parking System",
+      period: "July 2025 – Present",
+      bullets: [
+        "Led payment integration with Click & OctoBank",
+        "Designed PostgreSQL schema for time-based billing & transactions",
+        "Built RESTful APIs with authentication & CI/CD pipelines"
+      ]
+    },
     {
       role: "Backend Developer",
       company: "Elaro.uz E-commerce Platform",
@@ -181,19 +271,9 @@ const PROFILE = {
       ]
     },
     {
-      role: "Backend Developer",
-      company: "ParkMe Payment Parking System",
-      period: "2025",
-      bullets: [
-        "Led payment integration with Click & OctoBank",
-        "Designed PostgreSQL schema for time-based billing & transactions",
-        "Built RESTful APIs with authentication & CI/CD pipelines"
-      ]
-    },
-    {
       role: "Backend Developer Intern",
       company: "Softex LLC (Akam.uz EdTech Platform)",
-      period: "July – August 2025",
+      period: "July – August 2024",
       bullets: [
         "Contributed to migration from Yii2 → Laravel",
         "Refactored legacy code into modern Laravel architecture",
@@ -217,9 +297,96 @@ const PROFILE = {
       ]
     }
   ],
-  languages: ["Uzbek (Native)","English (Professional)","Russian (Conversational)"],
-  interests: ["Algorithms","Mentoring","Open-source contributions"]
+  projects: [
+    {
+      name: "Elaro.uz E-commerce",
+      tech: "Laravel, MySQL, Payment APIs",
+      description: "Full-stack e-commerce platform with multiple payment gateway integrations"
+    },
+    {
+      name: "ParkMe Parking System",
+      tech: "Laravel, PostgreSQL, REST APIs",
+      description: "Smart parking payment system with time-based billing"
+    },
+    {
+      name: "Terminal Portfolio",
+      tech: "HTML, CSS, JavaScript",
+      description: "Interactive terminal-style portfolio website"
+    }
+  ]
 };
+
+/* ===========================
+   Sound Effects System
+   =========================== */
+
+class SoundManager {
+  constructor() {
+    this.sounds = {};
+    this.enabled = true;
+    this.initSounds();
+  }
+
+  initSounds() {
+    // Create simple beep sounds using Web Audio API
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    this.soundConfigs = {
+      type: { freq: 800, duration: 100 },
+      keypress: { freq: 400, duration: 50 },
+      error: { freq: 200, duration: 300 },
+      success: { freq: 600, duration: 200 },
+      startup: { freq: 440, duration: 150 },
+      click: { freq: 500, duration: 80 }
+    };
+  }
+
+  async createBeep(frequency, duration, volume = 0.1) {
+    if (!this.enabled || !this.audioContext) return;
+    
+    try {
+      const oscillator = this.audioContext.createOscillator();
+      const gainNode = this.audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration / 1000);
+      
+      oscillator.start(this.audioContext.currentTime);
+      oscillator.stop(this.audioContext.currentTime + duration / 1000);
+    } catch (e) {
+      // Silently fail if audio context issues
+    }
+  }
+
+  play(soundName) {
+    const config = this.soundConfigs[soundName];
+    if (config) {
+      this.createBeep(config.freq, config.duration);
+    }
+  }
+
+  toggle() {
+    this.enabled = !this.enabled;
+    return this.enabled;
+  }
+}
+
+const soundManager = new SoundManager();
+
+function playSound(name) {
+  soundManager.play(name);
+}
+
+/* ===========================
+   Terminal State
+   =========================== */
 
 const screen = document.getElementById('screen');
 const hiddenInput = document.getElementById('hiddenInput');
@@ -227,988 +394,805 @@ const hiddenInput = document.getElementById('hiddenInput');
 let history = [];
 let historyIndex = -1;
 let isProcessing = false;
-let autocompleteList = ["help","about","experience","skills","education","contact","clear","home","games","guess-number","typing-challenge","whoami","ls","pwd","echo","projects","languages","interests","cd","cat","mkdir","neofetch","joke","exit","sudo","resume","rm"];
+let tempHandler = null;
+let currentTypedElement = null;
+let currentInput = '';
 
-// Virtual File System - Fixed structure
-let currentPath = "~";
-const VFS = {
-  "~": {
-    type: "dir",
-    contents: {
-      "resume.txt": { 
-        type: "file", 
-        content: `${PROFILE.name}
-Backend Engineer (Laravel & Payment Systems)
+const availableCommands = [
+  "help", "about", "whoami", "neofetch", "ls", "cat", "tree", "ps", "top", 
+  "uptime", "date", "history", "clear", "exit", "sudo", "vim", "nano", 
+  "ping", "curl", "grep", "find", "df", "free", "uname", "cowsay",
+  "experience", "skills", "education", "contact", "projects", "games"
+];
 
-CONTACT:
-Email: ${PROFILE.email}
-Phone: ${PROFILE.phone}
-Location: ${PROFILE.location}
-GitHub: ${PROFILE.github}
-LinkedIn: ${PROFILE.linkedin}
+/* ===========================
+   Utilities
+   =========================== */
 
-EXPERIENCE:
-• Backend Developer at Elaro.uz E-commerce Platform (March 2025 – June 2025)
-  - Built scalable Laravel e-commerce platform using DDD patterns
-  - Integrated Payme, Click, Uzum, OCTO payment gateways
-  - Developed modular architecture for rapid feature deployment
-
-• Backend Developer at ParkMe Payment Parking System (2025)
-  - Led payment integration with Click & OctoBank
-  - Designed PostgreSQL schema for time-based billing & transactions
-
-• Backend Developer Intern at Softex LLC (July – August 2025)
-  - Contributed to migration from Yii2 → Laravel
-  - Refactored legacy code into modern Laravel architecture
-
-SKILLS:
-Backend: ${PROFILE.skills.Backend.join(", ")}
-Payments: ${PROFILE.skills.Payments.join(", ")}
-Architecture: ${PROFILE.skills.Architecture.join(", ")}
-Frontend: ${PROFILE.skills.Frontend.join(", ")}
-Tools: ${PROFILE.skills.Tools.join(", ")}
-
-EDUCATION:
-${PROFILE.education[0].school}
-${PROFILE.education[0].details.join("\n")}
-
-LANGUAGES: ${PROFILE.languages.join(", ")}
-INTERESTS: ${PROFILE.interests.join(", ")}` 
-      },
-      "projects": { 
-        type: "dir", 
-        contents: {
-          "elaro.txt": { 
-            type: "file", 
-            content: `Elaro E-commerce Platform
-
-Role: Backend Developer
-Period: March 2025 – June 2025
-Technologies: Laravel, PHP, MySQL, Docker, AWS EC2
-
-Key Achievements:
-• Built scalable e-commerce platform using Domain Driven Design (DDD) patterns
-• Integrated multiple Uzbek payment gateways (Payme, Click, Uzum, OCTO)
-• Developed modular architecture for rapid feature deployment
-• Optimized system for high-concurrency purchases
-• Implemented robust error handling and logging systems
-
-Technical Details:
-- Microservices architecture with Laravel
-- Payment gateway abstractions for easy integration
-- Database optimization for high-traffic scenarios
-- CI/CD pipeline setup with automated testing` 
-          },
-          "parkme.txt": { 
-            type: "file", 
-            content: `ParkMe Payment Parking System
-
-Role: Backend Developer
-Period: 2025
-Technologies: Laravel, PostgreSQL, REST APIs
-
-Key Achievements:
-• Led payment integration with Click & OctoBank payment systems
-• Designed PostgreSQL schema for time-based billing & transactions
-• Built RESTful APIs with robust authentication systems
-• Implemented CI/CD pipelines for automated deployment
-
-Technical Features:
-- Time-based parking billing system
-- Real-time payment processing
-- Transaction logging and reconciliation
-- Mobile-friendly API endpoints
-- Automated billing calculations` 
-          },
-          "akam.txt": { 
-            type: "file", 
-            content: `Akam EdTech Platform (Softex LLC)
-
-Role: Backend Developer Intern
-Period: July – August 2025
-Technologies: Laravel, Yii2, MySQL, PHP
-
-Key Contributions:
-• Contributed to large-scale migration from Yii2 → Laravel
-• Refactored legacy code into modern Laravel architecture
-• Assisted in feature development & large-scale bug fixes
-• Improved code quality and performance
-
-Migration Details:
-- Database schema modernization
-- API endpoint restructuring
-- Authentication system upgrade
-- Performance optimization
-- Code quality improvements with PHPStan` 
-          }
-        }
-      },
-      "skills.txt": { 
-        type: "file", 
-        content: Object.entries(PROFILE.skills).map(([k, v]) => `${k}: ${v.join(", ")}`).join("\n") 
-      }
-    }
-  }
-};
-
-// Initialize focus
-setTimeout(()=> hiddenInput.focus(), 50);
-
-function sanitize(input){
-  if (typeof input !== 'string') return '';
+function sanitize(input) {
   return input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function appendLine(html, cls = ''){
+function appendLine(content, className = '') {
   const line = document.createElement('div');
-  line.className = (cls ? cls + ' ' : '') + 'out';
-  line.innerHTML = html || '';
+  line.className = `out ${className}`;
+  line.innerHTML = content;
   screen.appendChild(line);
   screen.scrollTop = screen.scrollHeight;
   return line;
 }
 
-function getCurrentDir(path = currentPath) {
-  if (path === "~") return VFS["~"];
+function createPrompt() {
+  const prompt = document.createElement('div');
+  prompt.className = 'prompt';
+  prompt.innerHTML = `
+    <span class="user text-green text-bold">${PROFILE.username}</span><span class="at text-default">@</span><span class="host text-green text-bold">${PROFILE.hostname}</span><span class="text-default">:</span><span class="path text-blue text-bold">~</span><span class="dollar text-default">$ </span>
+  `;
   
-  let dir = VFS["~"];
-  const parts = path.split("/").filter(p => p && p !== "~");
+  const inputLine = document.createElement('div');
+  inputLine.className = 'input-line';
   
-  for (let part of parts) {
-    if (part === "..") {
-      // Handle going up - for simplicity, just go back to root
-      continue;
-    }
-    if (dir && dir.contents && dir.contents[part] && dir.contents[part].type === "dir") {
-      dir = dir.contents[part];
-    } else {
-      return null;
-    }
-  }
-  return dir;
-}
-
-function resolvePath(path) {
-  if (!path) return currentPath;
+  const typedSpan = document.createElement('span');
+  typedSpan.className = 'typed text-default';
   
-  if (path === "~" || path === "/") return "~";
-  if (path === "..") {
-    if (currentPath === "~") return "~";
-    const parts = currentPath.split("/").filter(p => p);
-    parts.pop();
-    return parts.length ? parts.join("/") : "~";
-  }
-  if (path === ".") return currentPath;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
   
-  // Handle absolute paths
-  if (path.startsWith("~/")) {
-    return path.slice(2);
-  }
+  inputLine.appendChild(typedSpan);
+  inputLine.appendChild(cursor);
+  prompt.appendChild(inputLine);
   
-  // Handle relative paths
-  if (currentPath === "~") {
-    return path;
-  } else {
-    return currentPath + "/" + path;
-  }
-}
-
-function promptLine(){
-  const p = document.createElement('div');
-  p.className = 'prompt';
-  const displayPath = currentPath === "~" ? "~" : "~/" + currentPath;
-  p.innerHTML = `<div class="p1 c-accent">${sanitize(PROFILE.name)}</div><div class="p2 small">@portfolio:${sanitize(displayPath)}$</div>`;
-  screen.appendChild(p);
+  screen.appendChild(prompt);
   screen.scrollTop = screen.scrollHeight;
-  return p;
+  
+  return typedSpan;
 }
 
-async function typeOut(targetElement, text, opts = {}){
-  const speed = opts.speed || 18;
-  return new Promise(resolve=>{
-    let i = 0;
-    function step(){
-      if(i >= text.length){ resolve(); return; }
-      const ch = text[i++];
-      targetElement.innerHTML += sanitize(ch);
-      screen.scrollTop = screen.scrollHeight;
-      setTimeout(step, speed + (Math.random()*3));
-    }
-    step();
-  });
-}
-
-function span(text, cls){ 
-  return `<span class="${cls}">${sanitize(text)}</span>`; 
-}
-
-const JOKES = [
-  "Why do programmers prefer dark mode? Because light attracts bugs.",
-  "How many programmers does it take to change a light bulb? None, that's a hardware problem.",
-  "Why did the programmer quit his job? Because he didn't get arrays.",
-  "Why do PHP developers love arrays? Because they're always key to success!",
-  "What's a Laravel developer's favorite song? 'Migrate' by The Eloquent Models."
-];
+/* ===========================
+   Command Implementations
+   =========================== */
 
 const COMMANDS = {
   help: async () => {
-    appendLine(span("Available commands:","c-accent") + " (type and press Enter)");
-    appendLine("");
-    const categories = [
-      { name: "Personal Info", commands: ["about", "experience", "skills", "projects", "education", "contact", "resume"] },
-      { name: "System", commands: ["ls", "pwd", "cd", "cat", "mkdir", "rm", "whoami", "neofetch"] },
-      { name: "Utilities", commands: ["echo", "clear", "home", "joke", "exit", "sudo"] },
-      { name: "Interactive", commands: ["games", "guess-number", "typing-challenge"] }
-    ];
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Available commands:</span>');
+    appendLine('');
+    appendLine('<span class="text-blue">System:</span>     neofetch, ls, cat, tree, ps, top, uptime, date, history');
+    appendLine('<span class="text-blue">Portfolio:</span>  about, experience, skills, education, contact, projects');
+    appendLine('<span class="text-blue">Utils:</span>      clear, exit, sudo, vim, nano, ping, curl, grep, find');
+    appendLine('<span class="text-blue">Fun:</span>        games, cowsay, matrix');
+    appendLine('<span class="text-blue">Audio:</span>      sound [on|off] - toggle sound effects');
+    appendLine('');
+    appendLine('<span class="text-muted">Use Tab for autocompletion, ↑/↓ for history navigation</span>');
+  },
+
+  neofetch: async () => {
+    playSound('startup');
+    const art = `
+<span class="text-orange">                          ./+o+-       </span> <span class="text-green text-bold">${PROFILE.username}@${PROFILE.hostname}</span>
+<span class="text-orange">                  yyyyy- -yyyyyy+      </span> <span class="text-muted">-----------------</span>
+<span class="text-orange">               ://+//////-yyyyyyo      </span> <span class="text-blue">OS:</span> Ubuntu 22.04.3 LTS x86_64
+<span class="text-orange">           .++ .:/++++++/-.+sss/\`      </span> <span class="text-blue">Host:</span> Portfolio Terminal
+<span class="text-orange">         .:++o:  /++++++++/:--:/-      </span> <span class="text-blue">Kernel:</span> Linux 5.15.0-78-generic
+<span class="text-orange">        o:+o+:++.\`..\`\`\`.-/oo+++++/      </span> <span class="text-blue">Uptime:</span> ${PROFILE.uptime}
+<span class="text-orange">       .:+o:+o/.          \`+sssoo+/     </span> <span class="text-blue">Shell:</span> ${PROFILE.shell}
+<span class="text-orange">  .++/+:+oo+o:\`             /sssooo.   </span> <span class="text-blue">Resolution:</span> ${window.screen.width}x${window.screen.height}
+<span class="text-orange"> /+++//+:\`oo+o               /::--:.   </span> <span class="text-blue">Terminal:</span> Portfolio v2.0
+<span class="text-orange"> \\+/+o+++\`o++o               ++////.   </span> <span class="text-blue">CPU:</span> Backend Engineer Core i7
+<span class="text-orange">  .++.o+++oo+:\`             /dddhhh.   </span> <span class="text-blue">Memory:</span> ${Math.round(performance.memory?.usedJSHeapSize/1048576 || 42)}MB / 16GB
+<span class="text-orange">       .+.o+oo:.          \`oddhhhh+    </span> <span class="text-blue">Languages:</span> PHP, JavaScript, SQL
+<span class="text-orange">        \\+.++o+o\`\`-\`\`\`\`.:ohdhhhhh+     </span> <span class="text-blue">Location:</span> ${PROFILE.location}
+<span class="text-orange">         \`:o+++ \`ohhhhhhhhyo++os:      </span>
+<span class="text-orange">           .o:\`.syhhhhhhh/.oo++o\`      </span>
+<span class="text-orange">               /osyyyyyyo++ooo+++/     </span>
+<span class="text-orange">                   \`\`\`\`\` +oo+++o\\:     </span>
+<span class="text-orange">                          \`oo++.      </span>`;
     
-    categories.forEach(cat => {
-      appendLine(span(cat.name + ":", "c-accent"));
-      appendLine(cat.commands.map(c => `<span class="chip chip-cmd">${c}</span>`).join(' '));
-      appendLine("");
-    });
-    
-    appendLine(span("Tips:", "c-accent") + " Use " + span("↑/↓", "c-accent") + " to navigate history, " + span("Tab", "c-accent") + " for autocomplete.");
+    for (const line of art.split('\n')) {
+      if (line.trim()) {
+        appendLine(line);
+        await new Promise(r => setTimeout(r, 50));
+      }
+    }
   },
 
   about: async () => {
-    const lines = [
-      span(PROFILE.name, "c-accent") + " - " + span(PROFILE.title, "c-accent"),
-      "",
-      span("Location:", "c-accent") + " " + span(PROFILE.location, "c-muted"),
-      span("Phone:", "c-accent") + " " + span(PROFILE.phone, "c-muted"),
-      span("Email:", "c-accent") + " " + span(PROFILE.email, "c-accent"),
-      "",
-      span("GitHub:", "c-accent") + " " + `<a href="${PROFILE.github}" target="_blank">${PROFILE.github}</a>`,
-      span("LinkedIn:", "c-accent") + " " + `<a href="${PROFILE.linkedin}" target="_blank">${PROFILE.linkedin}</a>`,
-      "",
-      span("Passionate backend engineer specializing in Laravel and payment systems.", "c-muted")
-    ];
-    lines.forEach(l => appendLine(l));
-  },
-
-  experience: async () => {
-    appendLine(span("Professional Experience", "c-accent"));
-    appendLine("");
-    PROFILE.experiences.forEach((e, index) => {
-      appendLine(span(`${index + 1}. ${e.role}`, "c-accent") + " " + span("—", "c-muted") + " " + span(e.company, "c-accent"));
-      appendLine("   " + span(e.period, "c-muted"));
-      appendLine("");
-      e.bullets.forEach(bullet => {
-        appendLine(`   ${span("•", "c-accent")} ${span(bullet, "c-muted")}`);
-      });
-      appendLine("");
-    });
-  },
-
-  skills: async () => {
-    appendLine(span("Technical Skills", "c-accent") + " — grouped by domain");
-    appendLine("");
-    Object.entries(PROFILE.skills).forEach(([category, skills]) => {
-      appendLine(span(category + ":", "c-accent") + " " + skills.map(s => span(s, "c-accent")).join(", "));
-    });
-  },
-
-  education: async () => {
-    appendLine(span("Education & Training", "c-accent"));
-    appendLine("");
-    PROFILE.education.forEach(ed => {
-      appendLine(span(ed.school, "c-accent"));
-      ed.details.forEach(detail => appendLine("  " + span("•", "c-accent") + " " + span(detail, "c-muted")));
-      appendLine("");
-    });
-  },
-
-  contact: async () => {
-    appendLine(span("Contact Information", "c-accent"));
-    appendLine("");
-    const contactInfo = [
-      ["Email", PROFILE.email, PROFILE.email],
-      ["Phone", PROFILE.phone, `tel:${PROFILE.phone}`],
-      ["GitHub", PROFILE.github, PROFILE.github],
-      ["LinkedIn", PROFILE.linkedin, PROFILE.linkedin]
-    ];
-    
-    contactInfo.forEach(([label, value, link]) => {
-      if (link.startsWith('http')) {
-        appendLine(span(label + ":", "c-accent") + " " + `<a href="${link}" target="_blank">${value}</a>`);
-      } else {
-        appendLine(span(label + ":", "c-accent") + " " + span(value, "c-muted"));
-      }
-    });
-    
-    appendLine("");
-    appendLine(span("Feel free to reach out for opportunities or collaboration!", "c-muted"));
-  },
-
-  clear: async () => {
-    screen.innerHTML = "";
-  },
-
-  home: async () => {
-    await COMMANDS.clear();
-    await appendIntro();
-  },
-
-  whoami: async () => {
-    appendLine(span(PROFILE.name, "c-accent") + " — " + span(PROFILE.title, "c-accent"));
-  },
-
-  projects: async () => {
-    appendLine(span("Key Projects", "c-accent"));
-    appendLine("");
-    
-    const projects = [
-      {
-        name: "Elaro E-commerce Platform",
-        tech: "Laravel, PHP, MySQL, Docker",
-        desc: "Scalable e-commerce platform with DDD patterns and payment gateway integrations (Payme, Click, Uzum, OCTO).",
-        file: "projects/elaro.txt"
-      },
-      {
-        name: "ParkMe Payment System",
-        tech: "Laravel, PostgreSQL, REST APIs",
-        desc: "Time-based parking & payments with PostgreSQL billing schema and payment integrations.",
-        file: "projects/parkme.txt"
-      },
-      {
-        name: "Akam EdTech Migration",
-        tech: "Laravel, Yii2, MySQL",
-        desc: "Large-scale EdTech platform migration from Yii2 to Laravel with performance improvements.",
-        file: "projects/akam.txt"
-      }
-    ];
-    
-    projects.forEach((project, index) => {
-      appendLine(span(`${index + 1}. ${project.name}`, "c-accent") + " " + span(`(${project.tech})`, "c-muted"));
-      appendLine("   " + span(project.desc, "c-muted"));
-      appendLine("   " + span(`Use 'cat ${project.file}' for detailed information`, "c-accent"));
-      appendLine("");
-    });
-  },
-
-  languages: async () => {
-    appendLine(span("Languages:", "c-accent") + " " + PROFILE.languages.map(l => span(l, "c-muted")).join(", "));
-  },
-
-  interests: async () => {
-    appendLine(span("Interests:", "c-accent") + " " + PROFILE.interests.map(i => span(i, "c-muted")).join(", "));
+    playSound('type');
+    appendLine('<span class="text-green text-bold">About</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    appendLine(`<span class="text-blue">Name:</span>     ${PROFILE.name}`);
+    appendLine(`<span class="text-blue">Role:</span>     ${PROFILE.title}`);
+    appendLine(`<span class="text-blue">Location:</span> ${PROFILE.location}`);
+    appendLine(`<span class="text-blue">Email:</span>    <a href="mailto:${PROFILE.email}">${PROFILE.email}</a>`);
+    appendLine(`<span class="text-blue">GitHub:</span>   <a href="${PROFILE.github}" target="_blank">${PROFILE.github}</a>`);
+    appendLine(`<span class="text-blue">LinkedIn:</span> <a href="${PROFILE.linkedin}" target="_blank">${PROFILE.linkedin}</a>`);
   },
 
   ls: async (args) => {
-    const targetPath = args.length ? resolvePath(args[0]) : currentPath;
-    const dir = getCurrentDir(targetPath);
-    
-    if (!dir || dir.type !== "dir") {
-      appendLine(span(`ls: cannot access '${args[0] || '.'}': No such file or directory`, "c-error"));
-      return;
-    }
-    
-    const items = Object.entries(dir.contents);
-    if (items.length === 0) {
-      appendLine(span("(empty directory)", "c-muted"));
-      return;
-    }
-    
-    items.forEach(([name, item]) => {
-      const color = item.type === "dir" ? "c-accent" : "c-muted";
-      const suffix = item.type === "dir" ? "/" : "";
-      appendLine(span(name + suffix, color));
-    });
-  },
-
-  pwd: async () => {
-    const displayPath = currentPath === "~" ? "/home/portfolio" : "/home/portfolio/" + currentPath.replace("~", "").replace(/^\//, "");
-    appendLine(displayPath);
-  },
-
-  echo: async (args) => {
-    appendLine(args.join(" "));
-  },
-
-  cd: async (args) => {
-    if (!args.length) {
-      currentPath = "~";
-      return;
-    }
-    
-    const newPath = resolvePath(args[0]);
-    const dir = getCurrentDir(newPath);
-    
-    if (dir && dir.type === "dir") {
-      currentPath = newPath;
+    playSound('type');
+    if (args.includes('-la') || args.includes('-al')) {
+      appendLine('total 42');
+      appendLine('drwxr-xr-x  8 iskandar iskandar 4096 Sep  2 14:30 <span class="text-blue">.</span>');
+      appendLine('drwxr-xr-x  3 root     root     4096 Aug 28 09:15 <span class="text-blue">..</span>');
+      appendLine('-rw-r--r--  1 iskandar iskandar  220 Aug 28 09:15 <span class="text-muted">.bash_logout</span>');
+      appendLine('-rw-r--r--  1 iskandar iskandar 3771 Aug 28 09:15 <span class="text-muted">.bashrc</span>');
+      appendLine('drwxr-xr-x  2 iskandar iskandar 4096 Sep  2 10:20 <span class="text-blue">experience</span>');
+      appendLine('drwxr-xr-x  2 iskandar iskandar 4096 Sep  2 10:20 <span class="text-blue">projects</span>');
+      appendLine('-rw-r--r--  1 iskandar iskandar 1240 Sep  2 14:25 <span class="text-green">README.md</span>');
+      appendLine('drwxr-xr-x  2 iskandar iskandar 4096 Sep  2 10:20 <span class="text-blue">skills</span>');
     } else {
-      appendLine(span(`cd: no such file or directory: ${args[0]}`, "c-error"));
+      appendLine('<span class="text-blue">experience</span>  <span class="text-blue">projects</span>  <span class="text-green">README.md</span>  <span class="text-blue">skills</span>');
     }
   },
 
   cat: async (args) => {
-    if (!args.length) {
-      appendLine(span("cat: missing file operand", "c-error"));
+    playSound('type');
+    if (args.length === 0) {
+      appendLine('<span class="text-red">cat: missing file operand</span>');
       return;
     }
     
-    const filePath = args[0];
-    let resolvedPath, fileName;
-    
-    if (filePath.includes("/")) {
-      const parts = filePath.split("/");
-      fileName = parts.pop();
-      const dirPath = parts.join("/");
-      resolvedPath = resolvePath(dirPath);
+    if (args[0] === 'README.md') {
+      appendLine('<span class="text-green text-bold"># Iskandar Isabekov - Backend Engineer</span>');
+      appendLine('');
+      appendLine('Laravel specialist focusing on payment systems and e-commerce platforms.');
+      appendLine('');
+      appendLine('<span class="text-blue">## Quick Links</span>');
+      appendLine('- Run `neofetch` for system info');
+      appendLine('- Run `experience` for work history');
+      appendLine('- Run `skills` for technical abilities');
     } else {
-      fileName = filePath;
-      resolvedPath = currentPath;
-    }
-    
-    const dir = getCurrentDir(resolvedPath);
-    
-    if (dir && dir.contents && dir.contents[fileName]) {
-      const file = dir.contents[fileName];
-      if (file.type === "file") {
-        appendLine(file.content);
-      } else {
-        appendLine(span(`cat: ${fileName}: Is a directory`, "c-error"));
-      }
-    } else {
-      appendLine(span(`cat: ${fileName}: No such file or directory`, "c-error"));
+      appendLine(`<span class="text-red">cat: ${args[0]}: No such file or directory</span>`);
     }
   },
 
-  mkdir: async (args) => {
-    if (!args.length) {
-      appendLine(span("mkdir: missing operand", "c-error"));
-      return;
-    }
-    appendLine(span("mkdir: cannot create directory: Read-only file system", "c-error"));
+  ps: async () => {
+    playSound('type');
+    appendLine('  PID TTY          TIME CMD');
+    appendLine(' 1337 pts/0    00:00:01 bash');
+    appendLine(' 1420 pts/0    00:00:00 portfolio');
+    appendLine(' 1421 pts/0    00:00:00 laravel-server');
+    appendLine(' 1422 pts/0    00:00:00 mysql');
+    appendLine(' 1423 pts/0    00:00:00 redis-server');
   },
 
-  rm: async (args) => {
-    if (!args.length) {
-      appendLine(span("rm: missing operand", "c-error"));
-      return;
-    }
-    appendLine(span("rm: cannot remove: Read-only file system", "c-error"));
+  top: async () => {
+    playSound('type');
+    appendLine('<span class="text-green">top - 14:30:42 up 2:34, 1 user, load average: 0.08, 0.15, 0.21</span>');
+    appendLine('Tasks: 125 total, 1 running, 124 sleeping, 0 stopped, 0 zombie');
+    appendLine('Cpu(s): 12.5%us, 2.1%sy, 0.0%ni, 85.2%id, 0.2%wa');
+    appendLine('Mem: 16384MB total, 8192MB used, 8192MB free, 512MB buffers');
+    appendLine('');
+    appendLine('  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND');
+    appendLine(' 1421 iskandar  20   0  512000  64000  32000 S  15.3  0.4   0:05.23 laravel');
+    appendLine(' 1422 mysql     20   0  1536000 256000 16000 S   8.7  1.6   0:12.45 mysqld');
+    appendLine(' 1423 redis     20   0  65536   8192   4096 S   2.1  0.1   0:01.12 redis-server');
   },
 
-  neofetch: async () => {
-    const asciiArt = [
-      "       _,met$$$$$gg.",
-      "    ,g$$$$$$$$$$$$$$$P.",
-      "  ,g$$P\"     \"\"\"Y$$.\".",
-      " ,$$P'              `$$$.",
-      "',$$P       ,ggs.     `$$b:",
-      "`d$$'     ,$P\"'   .    $$$",
-      " $$P      d$'     ,    $$P",
-      " $$:      $.      -    ,d$$'",
-      " $$;      Y$b._   _,d$P'",
-      " Y$$.    `.`\"Y$$$$P\"'",
-      " `$$b      \"-.__",
-      "  `Y$$",
-      "   `Y$$.",
-      "     `$$b.",
-      "       `Y$$b.",
-      "          `\"Y$b._",
-      "              `\"\"\""
-    ].join('\n');
+  uptime: async () => {
+    playSound('type');
+    const now = new Date();
+    appendLine(`${now.toTimeString().split(' ')[0]} up ${PROFILE.uptime}, 1 user, load average: 0.08, 0.15, 0.21`);
+  },
 
-    appendLine(asciiArt);
-    appendLine("");
-    
-    const info = [
-      ["User", PROFILE.name],
-      ["Hostname", "portfolio"],
-      ["Title", PROFILE.title],
-      ["Location", PROFILE.location],
-      ["Shell", "/bin/terminal-portfolio"],
-      ["Languages", PROFILE.languages.join(", ")],
-      ["Skills", Object.keys(PROFILE.skills).join(", ")],
-      ["Uptime", "Always learning"]
-    ];
-    
-    info.forEach(([key, value]) => {
-      appendLine(span(key + ":", "c-accent") + " " + span(value, "c-muted"));
+  date: async () => {
+    playSound('type');
+    appendLine(new Date().toString());
+  },
+
+  history: async () => {
+    playSound('type');
+    history.forEach((cmd, i) => {
+      appendLine(`${String(i + 1).padStart(4)} ${cmd}`);
     });
   },
 
-  joke: async () => {
-    const joke = JOKES[Math.floor(Math.random() * JOKES.length)];
-    appendLine(span(joke, "c-accent"));
+  uname: async (args) => {
+    playSound('type');
+    if (args.includes('-a')) {
+      appendLine('Linux ubuntu 5.15.0-78-generic #85-Ubuntu SMP x86_64 x86_64 x86_64 GNU/Linux');
+    } else {
+      appendLine('Linux');
+    }
+  },
+
+  whoami: async () => {
+    playSound('type');
+    appendLine(PROFILE.username);
+  },
+
+  pwd: async () => {
+    playSound('type');
+    appendLine('/home/iskandar/portfolio');
+  },
+
+  df: async () => {
+    playSound('type');
+    appendLine('Filesystem     1K-blocks    Used Available Use% Mounted on');
+    appendLine('/dev/sda1       20971520 8388608  12582912  40% /');
+    appendLine('tmpfs            8388608       0   8388608   0% /dev/shm');
+  },
+
+  free: async () => {
+    playSound('type');
+    appendLine('              total        used        free      shared  buff/cache   available');
+    appendLine('Mem:       16777216     8388608     6291456      131072     2097152     7340032');
+    appendLine('Swap:       2097152           0     2097152');
+  },
+
+  experience: async () => {
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Work Experience</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    for (const exp of PROFILE.experiences) {
+      appendLine('');
+      appendLine(`<span class="text-blue text-bold">${exp.role}</span> <span class="text-muted">at</span> <span class="text-yellow">${exp.company}</span>`);
+      appendLine(`<span class="text-muted">${exp.period}</span>`);
+      appendLine('');
+      for (const bullet of exp.bullets) {
+        appendLine(`  • ${bullet}`);
+      }
+    }
+  },
+
+  skills: async () => {
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Technical Skills</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    for (const [category, skillList] of Object.entries(PROFILE.skills)) {
+      appendLine('');
+      appendLine(`<span class="text-blue text-bold">${category}:</span>`);
+      appendLine(`  ${skillList.join(' • ')}`);
+    }
+  },
+
+  education: async () => {
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Education & Training</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    for (const edu of PROFILE.education) {
+      appendLine('');
+      appendLine(`<span class="text-yellow text-bold">${edu.school}</span>`);
+      appendLine('');
+      for (const detail of edu.details) {
+        appendLine(`  • ${detail}`);
+      }
+    }
+  },
+
+  projects: async () => {
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Featured Projects</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    
+    for (const project of PROFILE.projects) {
+      appendLine('');
+      appendLine(`<span class="text-purple text-bold">${project.name}</span>`);
+      appendLine(`<span class="text-muted">Tech Stack:</span> <span class="text-orange">${project.tech}</span>`);
+      appendLine(`${project.description}`);
+    }
+  },
+
+  contact: async () => {
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Contact Information</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    appendLine('');
+    appendLine(`<span class="text-blue">📧 Email:</span>    <a href="mailto:${PROFILE.email}">${PROFILE.email}</a>`);
+    appendLine(`<span class="text-blue">📱 Phone:</span>    ${PROFILE.phone}`);
+    appendLine(`<span class="text-blue">🐙 GitHub:</span>   <a href="${PROFILE.github}" target="_blank">${PROFILE.github}</a>`);
+    appendLine(`<span class="text-blue">💼 LinkedIn:</span> <a href="${PROFILE.linkedin}" target="_blank">${PROFILE.linkedin}</a>`);
+    appendLine(`<span class="text-blue">📍 Location:</span> ${PROFILE.location}`);
+    appendLine('');
+    appendLine('<span class="text-yellow">💡 Open to backend development opportunities!</span>');
+  },
+
+  tree: async () => {
+    playSound('type');
+    appendLine('.');
+    appendLine('├── experience/');
+    appendLine('│   ├── elaro.txt');
+    appendLine('│   ├── parkme.txt');
+    appendLine('│   └── softex.txt');
+    appendLine('├── projects/');
+    appendLine('│   ├── e-commerce.md');
+    appendLine('│   ├── parking-system.md');
+    appendLine('│   └── portfolio.md');
+    appendLine('├── skills/');
+    appendLine('│   ├── backend.conf');
+    appendLine('│   ├── payments.conf');
+    appendLine('│   └── tools.conf');
+    appendLine('└── README.md');
+  },
+
+  ping: async (args) => {
+    playSound('type');
+    const host = args[0] || 'google.com';
+    appendLine(`PING ${host} (172.217.16.142): 56 data bytes`);
+    
+    for (let i = 1; i <= 4; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const time = (Math.random() * 50 + 10).toFixed(1);
+      appendLine(`64 bytes from ${host}: icmp_seq=${i} ttl=117 time=${time} ms`);
+    }
+    
+    appendLine('');
+    appendLine(`--- ${host} ping statistics ---`);
+    appendLine('4 packets transmitted, 4 received, 0% packet loss');
+  },
+
+  curl: async (args) => {
+    playSound('type');
+    const url = args[0] || 'https://api.github.com/users/isabekoviskandar';
+    appendLine(`Fetching ${url}...`);
+    await new Promise(r => setTimeout(r, 1000));
+    appendLine('{"login":"isabekoviskandar","type":"User","public_repos":12,"followers":8}');
+  },
+
+  clear: async () => {
+    screen.innerHTML = '';
   },
 
   exit: async () => {
-    appendLine(span("Thanks for visiting my portfolio!", "c-accent"));
-    appendLine(span("Session ended. Refresh page to restart.", "c-muted"));
-    isProcessing = true;
-    hiddenInput.style.display = 'none';
+    playSound('success');
+    appendLine('<span class="text-yellow">Thanks for visiting! 👋</span>');
+    appendLine('<span class="text-muted">Connection to portfolio closed.</span>');
+    await new Promise(r => setTimeout(r, 2000));
+    screen.innerHTML = '';
+    showWelcome();
   },
 
   sudo: async (args) => {
+    playSound('error');
     if (args.length === 0) {
-      appendLine(span("[sudo] password for " + PROFILE.name + ":", "c-muted"));
-      appendLine(span("Sorry, try again.", "c-error"));
-      return;
+      appendLine('<span class="text-red">sudo: a command is required</span>');
+    } else {
+      appendLine('<span class="text-red">[sudo] password for iskandar:</span>');
+      await new Promise(r => setTimeout(r, 2000));
+      appendLine('<span class="text-red">sudo: incorrect password attempts</span>');
+      appendLine('<span class="text-yellow">Nice try! This is a portfolio, not a real system 😉</span>');
     }
-    appendLine(span(`${PROFILE.name} is not in the sudoers file. This incident will be reported.`, "c-error"));
   },
 
-  resume: async () => {
-    await COMMANDS.cat(["resume.txt"]);
+  vim: async () => {
+    playSound('error');
+    appendLine('<span class="text-red">bash: vim: command not found</span>');
+    appendLine('<span class="text-yellow">Try `nano` instead, or check the portfolio commands!</span>');
+  },
+
+  nano: async () => {
+    playSound('error');
+    appendLine('<span class="text-red">bash: nano: command not found</span>');
+    appendLine('<span class="text-yellow">This is a portfolio terminal - try `help` for available commands</span>');
+  },
+
+  grep: async (args) => {
+    playSound('type');
+    if (args.length < 2) {
+      appendLine('<span class="text-red">grep: missing pattern or file</span>');
+      return;
+    }
+    appendLine(`<span class="text-yellow">Searching for "${args[0]}" in portfolio...</span>`);
+    appendLine('README.md:3:Laravel specialist focusing on payment systems');
+    appendLine('experience/elaro.txt:1:Built scalable Laravel e-commerce platform');
+  },
+
+  find: async (args) => {
+    playSound('type');
+    const pattern = args[0] || '*';
+    appendLine('./README.md');
+    appendLine('./experience/elaro.txt');
+    appendLine('./projects/e-commerce.md');
+    appendLine('./skills/backend.conf');
+  },
+
+  cowsay: async (args) => {
+    playSound('success');
+    const message = args.join(' ') || 'Hello from Iskandar!';
+    const msgLen = message.length;
+    
+    appendLine(' ' + '_'.repeat(msgLen + 2));
+    appendLine(`< ${message} >`);
+    appendLine(' ' + '-'.repeat(msgLen + 2));
+    appendLine('        \\   ^__^');
+    appendLine('         \\  (oo)\\_______');
+    appendLine('            (__)\\       )\\/\\');
+    appendLine('                ||----w |');
+    appendLine('                ||     ||');
+  },
+
+  matrix: async () => {
+    playSound('startup');
+    appendLine('<span class="text-green">Entering the Matrix...</span>');
+    
+    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+    for (let i = 0; i < 5; i++) {
+      let line = '';
+      for (let j = 0; j < 60; j++) {
+        line += `<span class="matrix-char">${chars[Math.floor(Math.random() * chars.length)]}</span>`;
+      }
+      appendLine(line);
+      await new Promise(r => setTimeout(r, 100));
+    }
+    
+    await new Promise(r => setTimeout(r, 1000));
+    appendLine('<span class="text-red">Connection terminated.</span>');
   },
 
   games: async () => {
-    appendLine(span("🎮 Games Suite", "c-accent"));
-    appendLine("");
-    appendLine("Available mini-games:");
-    appendLine(`  ${span("guess-number", "c-accent")}     → Classic number guessing game (1-100)`);
-    appendLine(`  ${span("typing-challenge", "c-accent")}  → Test your typing speed and accuracy`);
-    appendLine("");
-    appendLine(span("To play:", "c-accent") + " type the game name and press Enter");
-    appendLine(span("Example:", "c-muted") + " " + span("guess-number", "c-accent"));
+    playSound('type');
+    appendLine('<span class="text-green text-bold">Terminal Games</span>');
+    appendLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    appendLine('');
+    appendLine('<span class="text-blue">number-guess</span> - Guess the number game');
+    appendLine('<span class="text-blue">cowsay [text]</span> - Make the cow say something');
+    appendLine('<span class="text-blue">matrix</span> - Enter the Matrix');
+    appendLine('');
+    appendLine('Type any game name to start!');
   },
 
-  "guess-number": async () => {
-    await startGuessNumber();
+  'number-guess': async () => {
+    playSound('startup');
+    const number = Math.floor(Math.random() * 100) + 1;
+    let attempts = 0;
+    
+    appendLine('<span class="text-green text-bold">🎮 Number Guessing Game</span>');
+    appendLine('I\'m thinking of a number between 1 and 100...');
+    appendLine('<span class="text-yellow">Enter your guess:</span>');
+    
+    tempHandler = async (input) => {
+      attempts++;
+      const guess = parseInt(input);
+      
+      if (isNaN(guess)) {
+        appendLine('<span class="text-red">Please enter a valid number!</span>');
+        return true; // Continue game
+      }
+      
+      if (guess === number) {
+        playSound('success');
+        appendLine(`<span class="text-green">🎉 Correct! You guessed it in ${attempts} attempts!</span>`);
+        tempHandler = null;
+        return false; // End game
+      } else if (guess < number) {
+        appendLine(`<span class="text-blue">${guess} is too low! Try higher...</span>`);
+      } else {
+        appendLine(`<span class="text-blue">${guess} is too high! Try lower...</span>`);
+      }
+      
+      return true; // Continue game
+    };
   },
 
-  "typing-challenge": async () => {
-    await startTypingChallenge();
+  sound: async (args) => {
+    const action = args[0];
+    if (action === 'off') {
+      soundManager.enabled = false;
+      appendLine('<span class="text-yellow">🔇 Sound effects disabled</span>');
+    } else if (action === 'on') {
+      soundManager.enabled = true;
+      playSound('success');
+      appendLine('<span class="text-green">🔊 Sound effects enabled</span>');
+    } else {
+      const status = soundManager.enabled ? 'enabled' : 'disabled';
+      appendLine(`<span class="text-blue">Sound effects are currently ${status}</span>`);
+      appendLine('<span class="text-muted">Usage: sound [on|off]</span>');
+    }
   }
 };
 
-function autocomplete(input) {
-  const tokens = input.trim().split(/\s+/);
-  const lastToken = tokens[tokens.length - 1].toLowerCase();
-  const cmd = tokens[0] ? tokens[0].toLowerCase() : "";
+/* ===========================
+   Command Processing
+   =========================== */
 
-  if (tokens.length === 1) {
-    // Complete commands
-    return autocompleteList.filter(x => x.startsWith(lastToken));
-  } else if (["cd", "ls", "cat", "rm"].includes(cmd)) {
-    // Complete paths/files
-    const pathPrefix = lastToken;
-    let dirPath = "";
-    let prefix = pathPrefix;
-    
-    if (pathPrefix.includes("/")) {
-      const lastSlash = pathPrefix.lastIndexOf("/");
-      dirPath = pathPrefix.slice(0, lastSlash + 1);
-      prefix = pathPrefix.slice(lastSlash + 1);
-    }
-    
-    const resolvedDirPath = resolvePath(dirPath || ".");
-    const dir = getCurrentDir(resolvedDirPath);
-    
-    if (dir && dir.contents) {
-      const matches = Object.keys(dir.contents).filter(name => 
-        name.toLowerCase().startsWith(prefix.toLowerCase())
-      );
-      return matches.map(m => {
-        const isDir = dir.contents[m].type === "dir";
-        return dirPath + m + (isDir ? "/" : "");
-      });
-    }
-  }
-  return [];
-}
-
-async function startGuessNumber(){
-  if(isProcessing) return;
+async function processCommand(input) {
+  if (isProcessing) return;
   isProcessing = true;
-  
-  const min = 1, max = 100;
-  const target = Math.floor(Math.random() * (max - min + 1)) + min;
-  let attempts = 0;
-  
-  appendLine(span("🎯 Guess the Number Game", "c-accent"));
-  appendLine(span("I'm thinking of a number between 1 and 100.", "c-muted"));
-  appendLine(span("Type a number or 'quit' to exit.", "c-muted"));
-  appendLine("");
 
-  const handler = async (tokens) => {
-    const input = tokens.join(" ").trim().toLowerCase();
-    
-    if(input === 'quit' || input === 'exit'){
-      appendLine(span("Thanks for playing! The number was " + target + ".", "c-accent"));
-      teardown();
-      return;
-    }
-    
-    const guess = Number(input);
-    if(Number.isNaN(guess) || guess < min || guess > max){
-      appendLine(span("Please enter a valid number between 1 and 100, or 'quit' to exit.", "c-error"));
-      return;
-    }
-    
-    attempts++;
-    
-    if(guess === target){
-      appendLine(span(`🎉 Congratulations! You got it in ${attempts} attempt${attempts === 1 ? '' : 's'}!`, "c-accent"));
-      appendLine(span("Returning to normal prompt...", "c-muted"));
-      teardown();
-      return;
-    }
-    
-    const hint = guess < target ? "Too low! 📈" : "Too high! 📉";
-    appendLine(span(`${hint} Try again (attempt ${attempts}).`, "c-accent"));
-  };
-
-  installTemporaryHandler(handler, () => { isProcessing = false; });
-}
-
-async function startTypingChallenge(){
-  if(isProcessing) return;
-  isProcessing = true;
-  
-  const sentences = [
-    "Backend engineer building reliable systems, payments, and APIs.",
-    "Laravel framework enables rapid development of robust web applications.",
-    "Payment gateways require careful integration and thorough testing.",
-    "Clean code is not written by following rules but by following principles."
-  ];
-  
-  const sentence = sentences[Math.floor(Math.random() * sentences.length)];
-  let gameStarted = false;
-  let startTime = 0;
-  
-  appendLine(span("⌨️  Typing Challenge", "c-accent"));
-  appendLine(span("Type the following sentence as quickly and accurately as possible:", "c-muted"));
-  appendLine("");
-  appendLine(span(`"${sentence}"`, "c-accent"));
-  appendLine("");
-  appendLine(span("Type 'start' when ready, or 'quit' to exit.", "c-muted"));
-
-  const handler = async (tokens) => {
-    const input = tokens.join(" ").trim();
-    
-    if(!gameStarted){
-      if(input.toLowerCase() === "start"){
-        gameStarted = true;
-        startTime = performance.now();
-        appendLine(span("🚀 Go! Type the sentence above and press Enter:", "c-accent"));
-        return;
-      }
-      if(input.toLowerCase() === "quit" || input.toLowerCase() === "exit"){
-        appendLine(span("Challenge cancelled.", "c-muted"));
-        teardown();
-        return;
-      }
-      appendLine(span("Type 'start' to begin or 'quit' to cancel.", "c-accent"));
-      return;
-    }
-    
-    // Game is started, process typing result
-    const endTime = performance.now();
-    const timeTaken = (endTime - startTime) / 1000;
-    
-    // Calculate accuracy
-    let correctChars = 0;
-    const minLength = Math.min(input.length, sentence.length);
-    
-    for(let i = 0; i < minLength; i++){
-      if(input[i] === sentence[i]) correctChars++;
-    }
-    
-    // Penalize for length differences
-    const lengthPenalty = Math.abs(input.length - sentence.length);
-    const totalAccuracy = Math.max(0, Math.round(((correctChars - lengthPenalty) / sentence.length) * 100));
-    
-    // Calculate WPM
-    const words = sentence.split(/\s+/).length;
-    const wpm = Math.round((words / timeTaken) * 60);
-    
-    appendLine("");
-    appendLine(span("📊 Results:", "c-accent"));
-    appendLine(span(`Time: ${timeTaken.toFixed(2)} seconds`, "c-muted"));
-    appendLine(span(`Speed: ${Math.max(0, wpm)} WPM`, "c-accent"));
-    appendLine(span(`Accuracy: ${Math.max(0, totalAccuracy)}%`, "c-accent"));
-    
-    if(totalAccuracy === 100){
-      appendLine(span("🎯 Perfect! No errors detected!", "c-accent"));
-    } else if(totalAccuracy >= 90){
-      appendLine(span("🌟 Excellent typing!", "c-accent"));
-    } else if(totalAccuracy >= 70){
-      appendLine(span("👍 Good job!", "c-accent"));
-    } else {
-      appendLine(span("💪 Keep practicing!", "c-accent"));
-    }
-    
-    appendLine("");
-    appendLine(span("Returning to normal prompt...", "c-muted"));
-    teardown();
-  };
-
-  installTemporaryHandler(handler, () => { isProcessing = false; });
-}
-
-let tempHandler = null;
-
-function installTemporaryHandler(handlerFn, onDone){
-  tempHandler = { fn: handlerFn, onDone };
-}
-
-function teardown(){
-  if(tempHandler && tempHandler.onDone) { 
-    tempHandler.onDone(); 
+  const trimmed = input.trim();
+  if (!trimmed) {
+    isProcessing = false;
+    newPrompt();
+    return;
   }
-  tempHandler = null;
-  isProcessing = false;
-  
-  // Create new prompt
-  setTimeout(() => {
-    if (!isProcessing) {
-      typedSpan = createPromptInteractive();
-      hiddenInput.value = "";
-      hiddenInput.focus();
-    }
-  }, 100);
-}
-
-async function handleUserCommand(line){
-  const raw = line.trim();
-  if(!raw) return;
 
   // Add to history
-  history.push(raw);
-  historyIndex = history.length;
+  if (history[history.length - 1] !== trimmed) {
+    history.push(trimmed);
+  }
+  historyIndex = -1;
 
-  const tokens = raw.split(/\s+/);
-  const cmd = tokens[0].toLowerCase();
+  // Parse command and arguments
+  const parts = trimmed.split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
 
-  // Handle temporary handlers (games)
-  if(tempHandler){
-    try {
-      await tempHandler.fn(tokens);
-    } catch(error) {
-      appendLine(span("Game error occurred.", "c-error"));
-      teardown();
+  // Handle temporary command handler (for games)
+  if (tempHandler) {
+    const continueGame = await tempHandler(trimmed);
+    if (continueGame) {
+      appendLine('<span class="text-yellow">Enter your guess:</span>');
+      isProcessing = false;
+      newPrompt();
+      return;
     }
-    return;
   }
 
-  // Handle normal commands
-  if(COMMANDS[cmd]){
+  // Execute command
+  if (COMMANDS[cmd]) {
     try {
-      await COMMANDS[cmd](tokens.slice(1));
-    } catch(error) {
-      appendLine(span(`Error executing command: ${cmd}`, "c-error"));
-      console.error('Command error:', error);
+      await COMMANDS[cmd](args);
+    } catch (error) {
+      playSound('error');
+      appendLine(`<span class="text-red">Error executing command: ${error.message}</span>`);
     }
   } else {
-    appendLine(span(`Command not found: ${cmd}`, "c-error"));
-    appendLine(span("Type 'help' to see available commands.", "c-muted"));
+    playSound('error');
+    appendLine(`<span class="text-red">bash: ${cmd}: command not found</span>`);
+    
+    // Suggest similar commands
+    const suggestions = availableCommands.filter(c => 
+      c.includes(cmd) || cmd.includes(c) || levenshteinDistance(cmd, c) <= 2
+    );
+    
+    if (suggestions.length > 0) {
+      appendLine('');
+      appendLine('<span class="text-yellow">Did you mean:</span>');
+      appendLine(suggestions.map(s => `<span class="cmd-suggestion">${s}</span>`).join(''));
+    }
   }
+
+  isProcessing = false;
+  newPrompt();
 }
 
-function createPromptInteractive(prefill = ""){
-  if (isProcessing) return null;
+/* ===========================
+   Helper Functions
+   =========================== */
+
+function levenshteinDistance(a, b) {
+  const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
   
-  const p = promptLine();
-  const inputLine = document.createElement('div');
-  inputLine.className = 'input-line';
-  inputLine.innerHTML = `<div style="min-width:8px"></div><div style="flex:1"><span class="typed" aria-live="polite">${sanitize(prefill)}</span><span class="cursor" aria-hidden="true"></span></div>`;
-  p.appendChild(inputLine);
-  screen.scrollTop = screen.scrollHeight;
-  return p.querySelector('.typed');
+  for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
+  
+  for (let j = 1; j <= b.length; j++) {
+    for (let i = 1; i <= a.length; i++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,     // deletion
+        matrix[j - 1][i] + 1,     // insertion
+        matrix[j - 1][i - 1] + cost // substitution
+      );
+    }
+  }
+  
+  return matrix[b.length][a.length];
 }
 
-let typedSpan = createPromptInteractive();
+function getCompletions(partial) {
+  return availableCommands.filter(cmd => cmd.startsWith(partial.toLowerCase()));
+}
 
-// Input handling
-hiddenInput.value = "";
+/* ===========================
+   Input Handling
+   =========================== */
 
-hiddenInput.addEventListener('keydown', async (ev) => {
-  if (isProcessing && ev.key !== 'Enter') return;
+function setupInputHandler() {
+  // Remove any existing event listeners
+  hiddenInput.onkeydown = null;
   
-  if(ev.key === "Enter"){
-    ev.preventDefault();
-    const cmd = hiddenInput.value;
-    
-    // Remove cursor and finalize current line
-    const cursorEl = typedSpan?.parentElement?.querySelector('.cursor');
-    if (cursorEl) cursorEl.remove();
-    if (typedSpan) typedSpan.textContent = cmd;
-    
-    appendLine(""); // Add spacing
-    
-    try {
-      await handleUserCommand(cmd);
-    } catch(e){
-      appendLine(span("Command execution error.", "c-error"));
-      console.error('Execution error:', e);
+  hiddenInput.onkeydown = async (e) => {
+    if (isProcessing) {
+      e.preventDefault();
+      return;
     }
-    
-    // Create new prompt if not in a game
-    if (!isProcessing) {
-      typedSpan = createPromptInteractive();
-      hiddenInput.value = "";
-    }
-    return;
-  }
 
-  if(ev.key === "Tab"){
-    ev.preventDefault();
-    const currentValue = hiddenInput.value;
-    const matches = autocomplete(currentValue);
-    
-    if(matches.length === 1){
-      // Single match - complete it
-      const tokens = currentValue.split(/\s+/);
-      const lastToken = tokens[tokens.length - 1];
-      const newValue = currentValue.slice(0, currentValue.length - lastToken.length) + matches[0];
-      hiddenInput.value = newValue;
-      if (typedSpan) typedSpan.textContent = newValue;
-    } else if(matches.length > 1){
-      // Multiple matches - show them
-      appendLine("");
-      appendLine("Possible completions:");
-      appendLine(matches.map(m => span(m, "c-accent")).join("  "));
-      
-      // Find common prefix
-      const commonPrefix = matches.reduce((prefix, match) => {
-        let i = 0;
-        while (i < prefix.length && i < match.length && prefix[i] === match[i]) i++;
-        return prefix.slice(0, i);
-      });
-      
-      const tokens = currentValue.split(/\s+/);
-      const lastToken = tokens[tokens.length - 1];
-      
-      if (commonPrefix.length > lastToken.length) {
-        const newValue = currentValue.slice(0, currentValue.length - lastToken.length) + commonPrefix;
-        hiddenInput.value = newValue;
-        if (typedSpan) typedSpan.textContent = newValue;
-      }
-      
-      // Create new prompt
-      typedSpan = createPromptInteractive(hiddenInput.value);
-    }
-    return;
-  }
+    switch (e.key) {
+      case 'Enter':
+        e.preventDefault();
+        
+        // Show the command that was typed
+        if (currentTypedElement) {
+          currentTypedElement.textContent = currentInput;
+        }
+        
+        // Process the command
+        await processCommand(currentInput);
+        break;
 
-  if(ev.key === "ArrowUp" || ev.key === "ArrowDown"){
-    ev.preventDefault();
-    
-    if(ev.key === "ArrowUp"){
-      if(historyIndex > 0) {
-        historyIndex--;
-      } else if(historyIndex === -1 && history.length > 0) {
-        historyIndex = history.length - 1;
-      }
-    } else { // ArrowDown
-      if(historyIndex < history.length - 1) {
-        historyIndex++;
-      } else { 
-        historyIndex = history.length; 
-        hiddenInput.value = ""; 
-        if (typedSpan) typedSpan.textContent = "";
-        return; 
-      }
-    }
-    
-    if(historyIndex >= 0 && historyIndex < history.length){
-      hiddenInput.value = history[historyIndex];
-      if (typedSpan) typedSpan.textContent = hiddenInput.value;
-    }
-    return;
-  }
+      case 'Backspace':
+        e.preventDefault();
+        if (currentInput.length > 0) {
+          currentInput = currentInput.slice(0, -1);
+          if (currentTypedElement) {
+            currentTypedElement.textContent = currentInput;
+          }
+          playSound('keypress');
+        }
+        break;
 
-  if(ev.key === 'c' && (ev.ctrlKey || ev.metaKey)){
-    ev.preventDefault();
-    
-    if(tempHandler){
-      appendLine(span("^C", "c-error"));
-      appendLine(span("Game cancelled.", "c-muted"));
-      teardown();
-    } else {
-      appendLine(span("^C", "c-error"));
-      typedSpan = createPromptInteractive();
-    }
-    hiddenInput.value = "";
-    return;
-  }
+      case 'Tab':
+        e.preventDefault();
+        const parts = currentInput.split(/\s+/);
+        const lastPart = parts[parts.length - 1];
+        const completions = getCompletions(lastPart);
+        
+        if (completions.length === 1) {
+          const completion = completions[0];
+          parts[parts.length - 1] = completion;
+          currentInput = parts.join(' ') + ' ';
+          if (currentTypedElement) {
+            currentTypedElement.textContent = currentInput;
+          }
+          playSound('success');
+        } else if (completions.length > 1) {
+          appendLine('');
+          appendLine(completions.join('  '));
+          newPrompt();
+          return;
+        }
+        break;
 
-  // Update display after other keys
+      case 'ArrowUp':
+        e.preventDefault();
+        if (history.length > 0) {
+          if (historyIndex === -1) historyIndex = history.length - 1;
+          else if (historyIndex > 0) historyIndex--;
+          
+          currentInput = history[historyIndex];
+          if (currentTypedElement) {
+            currentTypedElement.textContent = currentInput;
+          }
+          playSound('keypress');
+        }
+        break;
+
+      case 'ArrowDown':
+        e.preventDefault();
+        if (historyIndex !== -1) {
+          if (historyIndex < history.length - 1) {
+            historyIndex++;
+            currentInput = history[historyIndex];
+          } else {
+            historyIndex = -1;
+            currentInput = '';
+          }
+          if (currentTypedElement) {
+            currentTypedElement.textContent = currentInput;
+          }
+          playSound('keypress');
+        }
+        break;
+
+      case 'l':
+        if (e.ctrlKey) {
+          e.preventDefault();
+          await COMMANDS.clear();
+          newPrompt();
+          return;
+        }
+        // Fall through to default
+
+      default:
+        if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          e.preventDefault();
+          currentInput += e.key;
+          if (currentTypedElement) {
+            currentTypedElement.textContent = currentInput;
+          }
+          playSound('keypress');
+        }
+        break;
+    }
+  };
+}
+
+async function newPrompt() {
+  if (isProcessing) return;
+  
+  // Reset current input state
+  currentInput = '';
+  currentTypedElement = createPrompt();
+  
+  // Set up input handler
+  setupInputHandler();
+  
+  // Focus hidden input to capture keystrokes
   setTimeout(() => {
-    if (typedSpan) typedSpan.textContent = hiddenInput.value;
-  }, 0);
-});
-
-// Handle paste events
-hiddenInput.addEventListener('paste', (ev) => {
-  setTimeout(() => {
-    if (typedSpan) typedSpan.textContent = hiddenInput.value;
+    hiddenInput.focus();
   }, 10);
-});
+}
 
-// Focus management
-window.addEventListener('keydown', (ev) => {
-  if(document.activeElement !== hiddenInput && !isProcessing){
+/* ===========================
+   Welcome Screen
+   =========================== */
+
+async function showWelcome() {
+  playSound('startup');
+  
+  appendLine('<span class="text-green text-bold">Ubuntu 22.04.3 LTS</span> <span class="text-blue">portfolio</span> tty1');
+  appendLine('');
+  appendLine(`${PROFILE.username} login: <span class="text-green">${PROFILE.username}</span>`);
+  appendLine('Password: ');
+  
+  await new Promise(r => setTimeout(r, 1000));
+  
+  appendLine('<span class="text-green">Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 5.15.0-78-generic x86_64)</span>');
+  appendLine('');
+  appendLine(' * Documentation:  https://help.ubuntu.com');
+  appendLine(' * Management:     https://landscape.canonical.com');
+  appendLine(' * Support:        https://ubuntu.com/advantage');
+  appendLine('');
+  appendLine('0 updates can be applied immediately.');
+  appendLine('');
+  appendLine(`Last login: ${new Date().toDateString()} 12:34:56 from 192.168.1.100`);
+  appendLine('');
+  
+  // Show initial neofetch-style info
+  await new Promise(r => setTimeout(r, 500));
+  
+  appendLine('<span class="text-yellow text-bold">🚀 Welcome to Iskandar\'s Interactive Portfolio Terminal!</span>');
+  appendLine('');
+  appendLine('<span class="text-blue">Type <span class="text-green">help</span> to see available commands</span>');
+  appendLine('<span class="text-blue">Type <span class="text-green">neofetch</span> for system information</span>');
+  appendLine('<span class="text-blue">Type <span class="text-green">about</span> to learn more about me</span>');
+  appendLine('');
+  
+  newPrompt();
+}
+
+/* ===========================
+   Global Event Handlers
+   =========================== */
+
+// Keep focus on hidden input
+document.addEventListener('click', () => {
+  if (!isProcessing) {
     hiddenInput.focus();
   }
 });
 
-screen.addEventListener('click', () => {
-  if (!isProcessing) hiddenInput.focus();
-});
-
-// Introduction function
-async function appendIntro(){
-  appendLine(span("Welcome to the interactive terminal portfolio", "c-accent"));
-  appendLine("");
-  appendLine("This terminal simulates a real development environment. Available commands:");
-  appendLine(span("help", "c-accent") + "  " + span("about", "c-accent") + "  " + span("experience", "c-accent") + "  " + span("skills", "c-accent") + "  " + span("projects", "c-accent"));
-  appendLine("");
-  appendLine(span("Navigation:", "c-muted") + " Use " + span("ls", "c-accent") + " to list files, " + span("cd", "c-accent") + " to change directories, " + span("cat", "c-accent") + " to read files");
-  appendLine(span("Fun stuff:", "c-muted") + " Try " + span("neofetch", "c-accent") + ", " + span("games", "c-accent") + ", or " + span("joke", "c-accent"));
-  appendLine("");
-  appendLine(span("Type 'help' for a complete list of commands.", "c-accent"));
-}
-
-// Initialize terminal
-(async function(){
-  screen.innerHTML = "";
-  
-  // ASCII header with typing effect
-  const header = appendLine("", "");
-  await typeOut(header, "┌─[ portfolio :: terminal ]─┐\n", { speed: 8 });
-  
-  const subtitle = appendLine("", "");
-  await typeOut(subtitle, `| user: ${PROFILE.name}\n| role: ${PROFILE.title}\n`, { speed: 6 });
-  
-  const timestamp = appendLine("", "");
-  const now = new Date();
-  await typeOut(timestamp, `| session: ${now.toLocaleString()}\n`, { speed: 6 });
-  
-  appendLine("└" + "─".repeat(30) + "┘\n", "c-muted");
-  
-  // Brief pause before intro
-  await new Promise(r => setTimeout(r, 300));
-  
-  await appendIntro();
-  
-  // Focus input
-  hiddenInput.focus();
-})();
-
-// Prevent tab navigation away from input
-screen.addEventListener('keydown', (e) => {
-  if(e.key === 'Tab') { 
-    e.preventDefault(); 
-    if (!isProcessing) hiddenInput.focus(); 
+// Handle window focus
+window.addEventListener('focus', () => {
+  if (!isProcessing) {
+    hiddenInput.focus();
   }
 });
 
-// Export for debugging
-window.TERMINAL = {
-  appendLine, 
-  appendIntro, 
-  typeOut,
-  PROFILE,
-  VFS,
-  getCurrentDir,
-  resolvePath
-};
+// Prevent default behavior for common shortcuts
+document.addEventListener('keydown', (e) => {
+  // Allow Ctrl+A, Ctrl+C for selection/copy
+  if (e.ctrlKey && ['a', 'c'].includes(e.key.toLowerCase())) {
+    return;
+  }
+  
+  // Prevent other shortcuts that might interfere
+  if (e.ctrlKey || e.altKey || e.metaKey) {
+    if (!['l'].includes(e.key.toLowerCase())) {
+      e.preventDefault();
+    }
+  }
+});
 
+// Initialize on page load
+window.addEventListener('load', () => {
+  // Small delay to ensure everything is loaded
+  setTimeout(() => {
+    showWelcome();
+  }, 100);
+});
+
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !isProcessing) {
+    hiddenInput.focus();
+  }
+});
 </script>
+
 </body>
 </html>

@@ -1094,6 +1094,10 @@ function setupInputHandler() {
 async function newPrompt() {
   if (isProcessing) return;
   
+  // Remove any existing cursors
+  const existingCursors = screen.querySelectorAll('.cursor');
+  existingCursors.forEach(cursor => cursor.remove());
+  
   // Reset current input state
   currentInput = '';
   currentTypedElement = createPrompt();
